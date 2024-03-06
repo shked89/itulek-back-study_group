@@ -28,10 +28,12 @@ class StudyGroupController extends Controller
             'adviser_id' => 'required|numeric',
             'department_id' => 'required|numeric',
             'speciality_id' => 'required|numeric',
-            'qualification_id' => 'sometimes|numeric',
+            'qualification_ids' => 'sometimes|array',
+            'qualification_ids.*' => 'numeric|distinct',
             'title' => 'sometimes|string|max:255',
-            'language_iso' => 'sometimes|string|max:3',
+            'language_iso' => 'sometimes|string|max:255',
         ];
+
 
         // Валидация
         $validator = Validator::make($queryParams, $rules);
@@ -45,48 +47,90 @@ class StudyGroupController extends Controller
         $validated = $validator->validated();
 
         $result = $this->studyGroupService->createStudyGroup($validated);
+        if (isset($result['error'])) {
+            return response()->json(['error' => $result['error']], 409); // Конфликт
+        }
+
 
         return response()->json(['message' => 'Study group and related data created successfully', 'data' => $result]);
     }
 
-    public function updateStudyGroup(Request $request, $id)
+
+
+
+    public function updateStudyGroup(Request $request)
     {
-        // Валидация входящих данных
-        $validated = $request->validate([
-            'studyGroup' => 'required|array',
-            'studyGroupInfo' => 'required|array',
-        ]);
+        // Извлекаем все query параметры
+        $queryParams = $request->query();
+
+        // Проверяем наличие обязательного параметра groupId
+        if (!isset($queryParams['groupId'])) {
+            return response()->json(['error' => 'The groupId query parameter is required.'], 400); // Bad Request
+        }
+
+        // Извлекаем и удаляем groupId из массива параметров, чтобы оставить только данные для обновления
+        $groupId = $queryParams['groupId'];
+        unset($queryParams['groupId']);
+
+        // Передаем оставшиеся данные в сервис для обновления
+        $result = $this->studyGroupService->updateStudyGroup($groupId, $queryParams);
+
+        // Проверка результата и ответ
+        if (isset($result['error'])) {
+            return response()->json(['error' => $result['error']], 409); // Конфликт или другой подходящий код состояния
+        }
+
+        return response()->json(['message' => 'Study group updated successfully', 'data' => $result]);
+    }
+
+    public function indexStudyGroup(Request $request)
+    {
+        $collegeId = $request->query('college_id');
+
+        $result = $this->studyGroupService->getAllStudyGroups($collegeId);
+
+        return response()->json($result);
+    }
+
+    // public function showStudyGroupById($id)
+    // {
+    //     return $this->studyGroupService->getStudyGroupById($id);
+    // }
+
+    public function deleteStudyGroup(Request $request)
+    {
+        // Извлечение groupId из параметров запроса
+        $groupId = $request->query('groupId');
+
+        // Обработка отсутствия groupId
+        if (!$groupId) {
+            return response()->json(['error' => 'The groupId parameter is required.'], 400); // Bad Request
+        }
 
         try {
-            // Вызов сервиса для обновления группы учебы и деталей и возвращение ответа сервиса
-            return $this->studyGroupService->updateStudyGroupWithDetails($id, $validated['studyGroup'], $validated['studyGroupInfo']);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            // Возврат ответа об ошибке, если группа учебы не найдена
-            return response()->json([
-                'success' => false,
-                'message' => 'StudyGroup not found.',
-            ], 404);
+            $result = $this->studyGroupService->deleteStudyGroup($groupId);
+            return response()->json($result);
         } catch (\Exception $e) {
-            // Возврат ответа об ошибке для любых других исключений
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 500);
+            // Обработка исключения, например, если группа не найдена
+            return response()->json(['error' => $e->getMessage()], 404); // Not Found или другой подходящий код состояния
         }
     }
 
-    public function indexStudyGroup()
+    public function getTitle(Request $request)
     {
-        return $this->studyGroupService->getAllStudyGroups();
+        $studyGroupId = $request->query('study_group_id');
+        
+        if (!$studyGroupId) {
+            return response()->json(['error' => 'The study_group_id query parameter is required.'], 400);
+        }
+
+        $title = $this->studyGroupService->getTitleByStudyGroupId($studyGroupId);
+
+        if (is_null($title)) {
+            return response()->json(['error' => 'No title found for the provided study_group_id.'], 404);
+        }
+
+        return response()->json(['title' => $title]);
     }
 
-    public function showStudyGroupById($id)
-    {
-        return $this->studyGroupService->getStudyGroupById($id);
-    }
-
-    public function deleteStudyGroup($id)
-    {
-        return $this->studyGroupService->deleteStudyGroup($id);
-    }
 }

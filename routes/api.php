@@ -18,10 +18,12 @@ use App\Http\Controllers\StudyGroupController;
 Route::prefix('groups')->group(function () {
 
     Route::prefix('v1')->group(function () {
-        Route::get('/create_study-groups', [StudyGroupController::class, 'createStudyGroup']);
-        Route::put('/update_study-groups/{id}', [StudyGroupController::class, 'updateStudyGroup']);
-        Route::get('/study-groups', [StudyGroupController::class, 'indexStudyGroup']);
-        Route::get('/study-groups/{id}', [StudyGroupController::class, 'showStudyGroupById']);
-        Route::delete('/study-groups/{id}', [StudyGroupController::class, 'deleteStudyGroup']);
+        Route::get('/createStudy-groups', [StudyGroupController::class, 'createStudyGroup']);
+        Route::put('/updateStudy-groups', [StudyGroupController::class, 'updateStudyGroup']);
+        Route::get('/indexStudy-groups', [StudyGroupController::class, 'indexStudyGroup']);
+        // Route::get('/study-groups/{id}', [StudyGroupController::class, 'showStudyGroupById']);
+        Route::delete('/deleteStudy-groups', [StudyGroupController::class, 'deleteStudyGroup']);
+        Route::get('/study-group-info/title', [StudyGroupController::class, 'getTitle']);
+
     });
 });

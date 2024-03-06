@@ -9,7 +9,6 @@ class RefStudyGroupToQualification extends Model
 {
     protected $table = 'group.ref_study_group_to_qualifications';
 
-    protected $primaryKey = 'study_group_id';
     public $incrementing = false;
     public $timestamps = false;
 

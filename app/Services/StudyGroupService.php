@@ -10,6 +10,14 @@ class StudyGroupService
 {
     public function createStudyGroup($data)
     {
+        if (isset($data['title'])) {
+            $existingTitle = RefStudyGroupInfo::where('title', $data['title'])->first();
+            if ($existingTitle) {
+                return ['error' => 'Study group title already exists.'];
+            }
+        }
+    
+        // Создаем учебную группу, если предыдущие проверки прошли успешно
         $studyGroup = StudyGroup::create([
             'start_year' => $data['start_year'],
             'college_id' => $data['college_id'],
@@ -17,14 +25,16 @@ class StudyGroupService
             'department_id' => $data['department_id'],
             'speciality_id' => $data['speciality_id'],
         ]);
-
-        if (isset($data['qualification_id'])) {
-            RefStudyGroupToQualification::create([
-                'study_group_id' => $studyGroup->id,
-                'qualification_id' => $data['qualification_id'],
-            ]);
+    
+        if (!empty($data['qualification_ids']) && is_array($data['qualification_ids'])) {
+            foreach (array_unique($data['qualification_ids']) as $qualificationId) {
+                RefStudyGroupToQualification::create([
+                    'study_group_id' => $studyGroup->id,
+                    'qualification_id' => $qualificationId,
+                ]);
+            }
         }
-
+    
         if (isset($data['title']) && isset($data['language_iso'])) {
             RefStudyGroupInfo::create([
                 'study_group_id' => $studyGroup->id,
@@ -32,88 +42,86 @@ class StudyGroupService
                 'language_iso' => $data['language_iso'],
             ]);
         }
-
+    
         return $studyGroup;
     }
 
     //Обновление данных Студ Группы
-    public function updateStudyGroupWithDetails($studyGroupId, array $studyGroupData, array $studyGroupInfoData)
+    public function updateStudyGroup($groupId, $data)
     {
-        $result = DB::transaction(function () use ($studyGroupId, $studyGroupData, $studyGroupInfoData) {
+        // Обновление данных учебной группы
+        $studyGroup = StudyGroup::findOrFail($groupId);
+        $studyGroup->update($data);
 
-            $studyGroup = StudyGroup::findOrFail($studyGroupId);
-            $studyGroup->update($studyGroupData);
+        // Обновление или добавление квалификаций
+        if (isset($data['qualification_ids']) && is_array($data['qualification_ids'])) {
+            // Очистка существующих связей
+            RefStudyGroupToQualification::where('study_group_id', $groupId)->delete();
 
-
-            $studyGroupInfo = RefStudyGroupInfo::where('study_group_id', $studyGroupId)->first();
-            if ($studyGroupInfo) {
-                // Если информация существует, обновляем ее
-                $studyGroupInfo->update($studyGroupInfoData);
-            } else {
-                // Если информации нет, создаем новую запись
-                $studyGroupInfoData['study_group_id'] = $studyGroupId;
-                $studyGroupInfo = RefStudyGroupInfo::create($studyGroupInfoData);
+            // Создание новых связей
+            foreach ($data['qualification_ids'] as $qualificationId) {
+                RefStudyGroupToQualification::create([
+                    'study_group_id' => $groupId,
+                    'qualification_id' => $qualificationId,
+                ]);
             }
+        }
 
-            return [
-                'studyGroup' => $studyGroup->fresh(),
-                'studyGroupInfo' => $studyGroupInfo,
-            ];
-        });
+        // Обновление или добавление информации о группе
+        if (isset($data['title']) && isset($data['language_iso'])) {
+            RefStudyGroupInfo::updateOrCreate(
+                ['study_group_id' => $groupId],
+                ['title' => $data['title'], 'language_iso' => $data['language_iso']]
+            );
+        }
 
-        return response()->json($result);
+        return $studyGroup;
     }
 
     //Вывод Всхе групп
-    public function getAllStudyGroups()
+    public function getAllStudyGroups($collegeId = null)
     {
-        $studyGroups = StudyGroup::all();
-        return response()->json($studyGroups);
+        // Загрузка связанных данных с помощью жадной загрузки
+        $query = StudyGroup::with(['refStudyGroupToQualifications', 'studyGroupInfo']);
+
+        if (!is_null($collegeId)) {
+            $query->where('college_id', $collegeId);
+        }
+
+        return $query->get();
     }
     //Вывод групп по id
-    public function getStudyGroupById($id)
-    {
-        $studyGroup = StudyGroup::find($id);
-        if (!$studyGroup) {
-            return response()->json(['message' => 'StudyGroup not found'], 404);
-        }
-        return response()->json($studyGroup);
-    }
+    // public function getStudyGroupById($id)
+    // {
+    //     $studyGroup = StudyGroup::find($id);
+    //     if (!$studyGroup) {
+    //         return response()->json(['message' => 'StudyGroup not found'], 404);
+    //     }
+    //     return response()->json($studyGroup);
+    // }
 
     //вывод по id
-    public function deleteStudyGroup($id)
+
+    public function deleteStudyGroup($groupId)
     {
-        $studyGroup = StudyGroup::with(['refStudyGroupToPersons', 'refStudyGroupToQualifications', 'studyGroupInfo'])->find($id);
+        $studyGroup = StudyGroup::findOrFail($groupId);
         
-        if (!$studyGroup) {
-            return response()->json(['message' => 'StudyGroup not found'], 404);
-        }
+        RefStudyGroupToQualification::where('study_group_id', $groupId)->delete();
+        RefStudyGroupInfo::where('study_group_id', $groupId)->delete();
         
-        // Удаляем связанные данные
-        try {
-            DB::transaction(function () use ($studyGroup) {
-                // Проверка и удаление связанных записей refStudyGroupToPersons
-                if ($studyGroup->refStudyGroupToPersons()->exists()) {
-                    $studyGroup->refStudyGroupToPersons()->delete();
-                }
-    
-                // Проверка и удаление связанных записей refStudyGroupToQualifications
-                if ($studyGroup->refStudyGroupToQualifications()->exists()) {
-                    $studyGroup->refStudyGroupToQualifications()->delete();
-                }
-    
-                // Проверка и удаление связанных записей studyGroupInfo
-                if ($studyGroup->studyGroupInfo()->exists()) {
-                    $studyGroup->studyGroupInfo()->delete();
-                }
-    
-                // После удаления всех связанных данных, удаляем саму группу учебы
-                $studyGroup->delete();
-            });
-    
-            return response()->json(['message' => 'StudyGroup and related data deleted successfully']);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Error deleting StudyGroup and related data', 'error' => $e->getMessage()], 500);
-        }
-}
+        // Удаление учебной группы
+        $studyGroup->delete();
+        
+        return ['message' => 'Study group deleted successfully.'];
+    }
+
+    public function getTitleByStudyGroupId($studyGroupId)
+    {
+        $studyGroupInfo = RefStudyGroupInfo::where('study_group_id', $studyGroupId)
+                                            ->first(['title']); // Извлекаем только поле title
+
+        return $studyGroupInfo ? $studyGroupInfo->title : null;
+    }
+
+
 }
