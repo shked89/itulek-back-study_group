@@ -20,7 +20,7 @@ use App\Http\Controllers\StudyGroupController;
 Route::prefix('groups')->group(function () {
 
     Route::prefix('v1')->group(function () {
-        Route::get('/createStudy-groups', [StudyGroupController::class, 'createStudyGroup']);
+        Route::post('/createStudy-groups', [StudyGroupController::class, 'createStudyGroup']);
         Route::put('/updateStudy-groups', [StudyGroupController::class, 'updateStudyGroup']);
         Route::get('/indexStudy-groups', [StudyGroupController::class, 'indexStudyGroup']);
         // Route::get('/study-groups/{id}', [StudyGroupController::class, 'showStudyGroupById']);
@@ -32,10 +32,10 @@ Route::prefix('groups')->group(function () {
 Route::prefix('curriculum')->group(function () {
     Route::prefix('v1')->group(function () {
 
-        Route::get('/createCurriculum', [CurriculumController::class, 'createCurriculum']);
+        Route::post('/createCurriculum', [CurriculumController::class, 'createCurriculum']);
         Route::get('/showCurriculums', [CurriculumController::class, 'show']);
         Route::get('/showCurriculumsDelete', [CurriculumController::class, 'showDelete']);
-        Route::get('/changeStatusDelete', [CurriculumController::class, 'changeStatusDelete']);
+        Route::post('/changeStatusDelete', [CurriculumController::class, 'changeStatusDelete']);
         Route::get('/indexStudyGroupForAddRup', [CurriculumController::class, 'indexStudyGroupForAddRup']);
         Route::get('/showEduBase', [CurriculumController::class, 'showEduBase']);
         Route::patch('/curriculumUpdate', [CurriculumController::class, 'updateCurriculum']);
