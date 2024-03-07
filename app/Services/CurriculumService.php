@@ -60,8 +60,8 @@ class CurriculumService
     {
         $query = Curriculum::query()->where('status_delete', false); // Добавляем фильтр для исключения удаленных учебных планов
 
-        if (isset($filters['id'])) {
-            $query->where('id', $filters['id']);
+        if (isset($filters['curriculum_id'])) {
+            $query->where('id', $filters['curriculum_id']);
         }
 
         if (isset($filters['college_id'])) {
@@ -99,8 +99,8 @@ class CurriculumService
     {
         $query = Curriculum::query()->where('status_delete', true); // Добавляем фильтр для исключения удаленных учебных планов
 
-        if (isset($filters['id'])) {
-            $query->where('id', $filters['id']);
+        if (isset($filters['curriculum_id'])) {
+            $query->where('id', $filters['curriculum_id']);
         }
 
         if (isset($filters['college_id'])) {

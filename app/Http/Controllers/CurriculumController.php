@@ -57,7 +57,7 @@ class CurriculumController extends Controller
     public function show(Request $request)
     {
         // Добавляем 'year' в список параметров, которые мы хотим извлечь из запроса
-        $filters = $request->only(['id', 'college_id', 'year']);
+        $filters = $request->only(['curriculum_id', 'college_id', 'year']);
     
         try {
             $curriculums = $this->curriculumService->getCurriculumWithFilters($filters);
@@ -70,7 +70,7 @@ class CurriculumController extends Controller
     public function showDelete(Request $request)
     {
         // Добавляем 'year' в список параметров, которые мы хотим извлечь из запроса
-        $filters = $request->only(['id', 'college_id', 'year']);
+        $filters = $request->only(['curriculum_id', 'college_id', 'year']);
     
         try {
             $curriculums = $this->curriculumService->getCurriculumWithFiltersDelete($filters);
@@ -83,7 +83,7 @@ class CurriculumController extends Controller
 
     public function changeStatusDelete(Request $request)
     {
-        $curriculumId = $request->query('id');
+        $curriculumId = $request->query('curriculum_id');
         $status = $request->query('status_delete', true); // Значение по умолчанию false, если не предоставлено
         $status = filter_var($status, FILTER_VALIDATE_BOOLEAN); // Преобразование в boolean
 
