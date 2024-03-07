@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\CurriculumController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\StudyGroupController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -24,6 +26,20 @@ Route::prefix('groups')->group(function () {
         // Route::get('/study-groups/{id}', [StudyGroupController::class, 'showStudyGroupById']);
         Route::delete('/deleteStudy-groups', [StudyGroupController::class, 'deleteStudyGroup']);
         Route::get('/study-group-info/title', [StudyGroupController::class, 'getTitle']);
+    });
+});
+
+Route::prefix('curriculum')->group(function () {
+    Route::prefix('v1')->group(function () {
+
+        Route::get('/createCurriculum', [CurriculumController::class, 'createCurriculum']);
+        Route::get('/showCurriculums', [CurriculumController::class, 'show']);
+        Route::get('/showCurriculumsDelete', [CurriculumController::class, 'showDelete']);
+        Route::get('/changeStatusDelete', [CurriculumController::class, 'changeStatusDelete']);
+        Route::get('/indexStudyGroupForAddRup', [CurriculumController::class, 'indexStudyGroupForAddRup']);
+        Route::get('/showEduBase', [CurriculumController::class, 'showEduBase']);
+        Route::patch('/curriculumUpdate', [CurriculumController::class, 'updateCurriculum']);
+
 
     });
 });

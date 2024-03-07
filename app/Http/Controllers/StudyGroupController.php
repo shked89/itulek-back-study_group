@@ -26,6 +26,7 @@ class StudyGroupController extends Controller
             'start_year' => 'required|numeric',
             'college_id' => 'required|numeric',
             'adviser_id' => 'required|numeric',
+            'edu_base_id' => 'required|numeric',
             'department_id' => 'required|numeric',
             'speciality_id' => 'required|numeric',
             'qualification_ids' => 'sometimes|array',
@@ -92,10 +93,6 @@ class StudyGroupController extends Controller
         return response()->json($result);
     }
 
-    // public function showStudyGroupById($id)
-    // {
-    //     return $this->studyGroupService->getStudyGroupById($id);
-    // }
 
     public function deleteStudyGroup(Request $request)
     {
@@ -119,7 +116,7 @@ class StudyGroupController extends Controller
     public function getTitle(Request $request)
     {
         $studyGroupId = $request->query('study_group_id');
-        
+
         if (!$studyGroupId) {
             return response()->json(['error' => 'The study_group_id query parameter is required.'], 400);
         }
@@ -132,5 +129,4 @@ class StudyGroupController extends Controller
 
         return response()->json(['title' => $title]);
     }
-
 }

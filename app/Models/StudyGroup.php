@@ -17,6 +17,7 @@ class StudyGroup extends Model
         'adviser_id',
         'department_id',
         'speciality_id',
+        'edu_base_id',
     ];
 
     public function refStudyGroupToPersons()
@@ -33,4 +34,14 @@ class StudyGroup extends Model
     {
         return $this->hasOne(RefStudyGroupInfo::class, 'study_group_id');
     }
+    public function eduBase()
+    {
+        return $this->belongsTo(EduBase::class, 'edu_base_id');
+    }
+
+    public function studyGroups()
+{
+    return $this->belongsToMany(StudyGroup::class, 'group.ref_study_group_curriculums', 'curriculum_id', 'study_group_id');
+}
+
 }

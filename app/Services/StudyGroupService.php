@@ -20,6 +20,7 @@ class StudyGroupService
         // Создаем учебную группу, если предыдущие проверки прошли успешно
         $studyGroup = StudyGroup::create([
             'start_year' => $data['start_year'],
+            'edu_base_id' => $data['edu_base_id'],
             'college_id' => $data['college_id'],
             'adviser_id' => $data['adviser_id'],
             'department_id' => $data['department_id'],
@@ -81,14 +82,38 @@ class StudyGroupService
     //Вывод Всхе групп
     public function getAllStudyGroups($collegeId = null)
     {
-        // Загрузка связанных данных с помощью жадной загрузки
-        $query = StudyGroup::with(['refStudyGroupToQualifications', 'studyGroupInfo']);
-
+        // Жадная загрузка без ограничения полей для study_group_info и ref_study_group_to_qualifications
+        $query = StudyGroup::with(['eduBase:id,title', 'refStudyGroupToQualifications', 'studyGroupInfo']);
+    
         if (!is_null($collegeId)) {
             $query->where('college_id', $collegeId);
         }
-
-        return $query->get();
+    
+        $studyGroups = $query->get();
+    
+        // Трансформация результатов
+        $result = $studyGroups->map(function ($studyGroup) {
+            // Добавление title учебной базы и подготовка данных из связанных моделей
+            $studyGroup->edu_base_title = $studyGroup->eduBase ? $studyGroup->eduBase->title : null;
+    
+            // Преобразование studyGroupInfo и refStudyGroupToQualifications в массив, если они не пусты
+            $studyGroupInfo = $studyGroup->studyGroupInfo ? $studyGroup->studyGroupInfo->toArray() : null;
+            $qualifications = $studyGroup->refStudyGroupToQualifications ? $studyGroup->refStudyGroupToQualifications->toArray() : [];
+    
+            return [
+                'id' => $studyGroup->id,
+                'start_year' => $studyGroup->start_year,
+                'college_id' => $studyGroup->college_id,
+                'adviser_id' => $studyGroup->adviser_id,
+                'department_id' => $studyGroup->department_id,
+                'speciality_id' => $studyGroup->speciality_id,
+                'edu_base_title' => $studyGroup->edu_base_title,
+                'study_group_info' => $studyGroupInfo,
+                'ref_study_group_to_qualifications' => $qualifications,
+            ];
+        });
+    
+        return $result;
     }
     //Вывод групп по id
     // public function getStudyGroupById($id)

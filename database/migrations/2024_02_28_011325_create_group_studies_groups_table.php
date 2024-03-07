@@ -19,7 +19,10 @@ return new class extends Migration
             $table->bigInteger('college_id')->unsigned()->nullable();
             $table->bigInteger('adviser_id')->unsigned()->nullable();
             $table->bigInteger('department_id')->unsigned()->nullable();
-            $table->bigInteger('speciality_id')->unsigned()->nullable();      
+            $table->bigInteger('speciality_id')->unsigned()->nullable();
+            $table->bigInteger('edu_base_id')->unsigned()->nullable();
+            $table->foreign('edu_base_id')->references('id')->on('group.edu_bases')->onDelete('cascade');
+      
         });
     }
 

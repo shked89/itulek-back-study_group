@@ -15,6 +15,7 @@ class RefStudyGroupInfo extends Model
         'title',
         'language_iso',
         'study_group_id',
+        
     ];
 
     public function studyGroup()
