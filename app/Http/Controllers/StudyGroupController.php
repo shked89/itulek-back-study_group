@@ -20,7 +20,7 @@ class StudyGroupController extends Controller
     {
         // Извлекаем параметры запроса
         $queryParams = $request->query();
-
+    
         // Правила валидации
         $rules = [
             'start_year' => 'required|numeric',
@@ -29,30 +29,29 @@ class StudyGroupController extends Controller
             'edu_base_id' => 'required|numeric',
             'department_id' => 'required|numeric',
             'speciality_id' => 'required|numeric',
-            'qualification_ids' => 'sometimes|array',
-            'qualification_ids.*' => 'numeric|distinct',
+            'qualification_ids' => 'sometimes|string',
             'title' => 'sometimes|string|max:255',
             'language_iso' => 'sometimes|string|max:255',
         ];
-
-
-        // Валидация
+    
         $validator = Validator::make($queryParams, $rules);
-
-        // Проверка на ошибки валидации
+    
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-
-        // Данные прошли валидацию
+    
         $validated = $validator->validated();
-
+    
+        if (isset($validated['qualification_ids'])) {
+            $validated['qualification_ids'] = explode(',', $validated['qualification_ids']);
+            $validated['qualification_ids'] = array_filter($validated['qualification_ids'], 'is_numeric');
+        }
+    
         $result = $this->studyGroupService->createStudyGroup($validated);
         if (isset($result['error'])) {
             return response()->json(['error' => $result['error']], 409); // Конфликт
         }
-
-
+    
         return response()->json(['message' => 'Study group and related data created successfully', 'data' => $result]);
     }
 
@@ -61,26 +60,28 @@ class StudyGroupController extends Controller
 
     public function updateStudyGroup(Request $request)
     {
-        // Извлекаем все query параметры
         $queryParams = $request->query();
-
-        // Проверяем наличие обязательного параметра groupId
+    
         if (!isset($queryParams['groupId'])) {
             return response()->json(['error' => 'The groupId query parameter is required.'], 400); // Bad Request
         }
-
-        // Извлекаем и удаляем groupId из массива параметров, чтобы оставить только данные для обновления
+    
         $groupId = $queryParams['groupId'];
         unset($queryParams['groupId']);
-
-        // Передаем оставшиеся данные в сервис для обновления
+    
+        if (isset($queryParams['qualification_ids']) && is_string($queryParams['qualification_ids'])) {
+            $queryParams['qualification_ids'] = explode(',', $queryParams['qualification_ids']);
+            $queryParams['qualification_ids'] = array_filter($queryParams['qualification_ids'], function($value) {
+                return is_numeric($value) && (int)$value > 0;
+            });
+        }
+    
         $result = $this->studyGroupService->updateStudyGroup($groupId, $queryParams);
-
-        // Проверка результата и ответ
+    
         if (isset($result['error'])) {
             return response()->json(['error' => $result['error']], 409); // Конфликт или другой подходящий код состояния
         }
-
+    
         return response()->json(['message' => 'Study group updated successfully', 'data' => $result]);
     }
 

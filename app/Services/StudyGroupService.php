@@ -53,13 +53,11 @@ class StudyGroupService
         // Обновление данных учебной группы
         $studyGroup = StudyGroup::findOrFail($groupId);
         $studyGroup->update($data);
-
+    
         // Обновление или добавление квалификаций
         if (isset($data['qualification_ids']) && is_array($data['qualification_ids'])) {
-            // Очистка существующих связей
             RefStudyGroupToQualification::where('study_group_id', $groupId)->delete();
-
-            // Создание новых связей
+    
             foreach ($data['qualification_ids'] as $qualificationId) {
                 RefStudyGroupToQualification::create([
                     'study_group_id' => $groupId,
@@ -67,18 +65,26 @@ class StudyGroupService
                 ]);
             }
         }
-
-        // Обновление или добавление информации о группе
+    
+        // Проверка на уникальность title перед обновлением информации о группе
+        if (isset($data['title'])) {
+            $existingGroup = RefStudyGroupInfo::where('title', $data['title'])
+                                               ->where('study_group_id', '!=', $groupId)
+                                               ->first();
+            if ($existingGroup) {
+                return ['error' => 'Study group title already exists.'];
+            }
+        }
+    
         if (isset($data['title']) && isset($data['language_iso'])) {
             RefStudyGroupInfo::updateOrCreate(
                 ['study_group_id' => $groupId],
                 ['title' => $data['title'], 'language_iso' => $data['language_iso']]
             );
         }
-
+    
         return $studyGroup;
     }
-
     //Вывод Всхе групп
     public function getAllStudyGroups($collegeId = null)
     {
