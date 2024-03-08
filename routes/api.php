@@ -27,19 +27,17 @@ Route::prefix('groups')->group(function () {
         Route::delete('/deleteStudy-groups', [StudyGroupController::class, 'deleteStudyGroup']);
         Route::get('/study-group-info/title', [StudyGroupController::class, 'getTitle']);
     });
-});
 
-Route::prefix('curriculum')->group(function () {
-    Route::prefix('v1')->group(function () {
+    Route::prefix('curriculum')->group(function () {
+        Route::prefix('v1')->group(function () {
 
-        Route::post('/createCurriculum', [CurriculumController::class, 'createCurriculum']);
-        Route::get('/showCurriculums', [CurriculumController::class, 'show']);
-        Route::get('/showCurriculumsDelete', [CurriculumController::class, 'showDelete']);
-        Route::post('/changeStatusDelete', [CurriculumController::class, 'changeStatusDelete']);
-        Route::get('/indexStudyGroupForAddRup', [CurriculumController::class, 'indexStudyGroupForAddRup']);
-        Route::get('/showEduBase', [CurriculumController::class, 'showEduBase']);
-        Route::patch('/curriculumUpdate', [CurriculumController::class, 'updateCurriculum']);
-
-
+            Route::post('/createCurriculum', [CurriculumController::class, 'createCurriculum']);
+            Route::get('/showCurriculums', [CurriculumController::class, 'show']);
+            Route::get('/showCurriculumsDelete', [CurriculumController::class, 'showDelete']);
+            Route::post('/changeStatusDelete', [CurriculumController::class, 'changeStatusDelete']);
+            Route::get('/indexStudyGroupForAddRup', [CurriculumController::class, 'indexStudyGroupForAddRup']);
+            Route::get('/showEduBase', [CurriculumController::class, 'showEduBase']);
+            Route::patch('/curriculumUpdate', [CurriculumController::class, 'updateCurriculum']);
+        });
     });
 });
